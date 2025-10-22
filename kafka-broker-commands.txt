@@ -1,0 +1,27 @@
+sudo zerotier-cli join EBE7FBD4452A43CE
+sudo zerotier-cli listnetworks
+ping 192.168.191.83   # Consumer-2's IP
+ping 192.168.191.233  # Producer's IP
+ping 192.168.191.42   # Consumer-1's IP
+
+##Terminal-1: Zookeeper
+sudo sed -i 's| #\?listeners= *|listeners=PLAINTEXT://0.0.0.0:9092| /opt/kafka/config/server-properties  // Setting conditions in kafka server properties file
+sudo sed -i '/*retention.ms=/d" /opt/kafka/conftg/server.properties  //Setting conditions in kafka server properties file
+grep -E "^(listeners|advertised.listeners|retention.ms|delete.topic.enable)=" /opt/kafka/config/server.properties  //Setting conditions in kafka server properties file
+cd /opt/kafka
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+
+## Terminal-2: Kafka
+cd /opt/kafka
+bin/kafka-server-start.sh config/server.properties
+
+## Terminal-3: Create Kafka Topics:
+cd /opt/kafka
+for t in topic-cpu topic-mem topic-net topic-disk; do
+  bin/kafka-topics.sh --bootstrap-server 192.168.191.50:9092 \
+    --create --topic "$t" --partitions 1 --replication-factor 1 --if-not-exists
+done
+bin/kafka-topics.sh --bootstrap-server 192.168.191.50:9092 --list
+bin/kafka-topics.sh --bootstrap-server 192.168.191.50:9092 --describe --topic topic-cpu
+
